@@ -12,4 +12,4 @@ FROM alpine
 RUN apk add -U --no-cache ca-certificates openssl tzdata
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 COPY --from=upx /go/bin/ /usr/local/bin/
-CMD ls /usr/local/bin/
+CMD areacn
