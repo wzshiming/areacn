@@ -170,6 +170,9 @@ components:
       properties:
         area_id:
           type: string
+        level:
+          type: integer
+          format: int64
         name:
           type: string
   responses:
@@ -200,7 +203,7 @@ tags:
 - name: AreacnService
   description: 'AreacnService #path:"/areacn/"#'
 `)
-var OpenAPI4JSON = []byte(`{"openapi":"3.0.1","info":{"title":"OpenAPI Demo","description":"Automatically generated","contact":{"name":"wzshiming","url":"https://github.com/wzshiming/gen"},"version":"0.0.1"},"servers":[{"url":"/"},{"url":"{scheme}{host}{port}{path}","variables":{"host":{"enum":["localhost"],"default":"localhost"},"path":{"enum":["/"],"default":"/"},"port":{"enum":[""],"default":""},"scheme":{"enum":["http://","https://"],"default":"http://"}}}],"paths":{"/areacn/{area_id}":{"get":{"tags":["AreacnService"],"summary":"Get #route:\"GET /{area_id}\"# 获取行政区划分信息 总共5级 获取第一级省份传0","description":"Get #route:\"GET /{area_id}\"# 获取行政区划分信息 总共5级 获取第一级省份传0","parameters":[{"$ref":"#/components/parameters/area_id"}],"responses":{"200":{"description":"Response code is 200","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Area"}}}}},"400":{"description":"Response code is 400","content":{"text/plain":{"schema":{"type":"string","format":"error"}}}}}}}},"components":{"schemas":{"Area":{"type":"object","properties":{"area_id":{"type":"string"},"name":{"type":"string"}}}},"responses":{"areas":{"description":"Response code is 200","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Area"}}}}},"err":{"description":"Response code is 400","content":{"text/plain":{"schema":{"type":"string","format":"error"}}}}},"parameters":{"area_id":{"name":"area_id","in":"path","description":"#name:\"area_id\"#","required":true,"schema":{"type":"string"}}}},"tags":[{"name":"AreacnService","description":"AreacnService #path:\"/areacn/\"#"}]}`)
+var OpenAPI4JSON = []byte(`{"openapi":"3.0.1","info":{"title":"OpenAPI Demo","description":"Automatically generated","contact":{"name":"wzshiming","url":"https://github.com/wzshiming/gen"},"version":"0.0.1"},"servers":[{"url":"/"},{"url":"{scheme}{host}{port}{path}","variables":{"host":{"enum":["localhost"],"default":"localhost"},"path":{"enum":["/"],"default":"/"},"port":{"enum":[""],"default":""},"scheme":{"enum":["http://","https://"],"default":"http://"}}}],"paths":{"/areacn/{area_id}":{"get":{"tags":["AreacnService"],"summary":"Get #route:\"GET /{area_id}\"# 获取行政区划分信息 总共5级 获取第一级省份传0","description":"Get #route:\"GET /{area_id}\"# 获取行政区划分信息 总共5级 获取第一级省份传0","parameters":[{"$ref":"#/components/parameters/area_id"}],"responses":{"200":{"description":"Response code is 200","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Area"}}}}},"400":{"description":"Response code is 400","content":{"text/plain":{"schema":{"type":"string","format":"error"}}}}}}}},"components":{"schemas":{"Area":{"type":"object","properties":{"area_id":{"type":"string"},"level":{"type":"integer","format":"int64"},"name":{"type":"string"}}}},"responses":{"areas":{"description":"Response code is 200","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Area"}}}}},"err":{"description":"Response code is 400","content":{"text/plain":{"schema":{"type":"string","format":"error"}}}}},"parameters":{"area_id":{"name":"area_id","in":"path","description":"#name:\"area_id\"#","required":true,"schema":{"type":"string"}}}},"tags":[{"name":"AreacnService","description":"AreacnService #path:\"/areacn/\"#"}]}`)
 
 // RouteOpenAPI
 func RouteOpenAPI(router *mux.Router) *mux.Router {
