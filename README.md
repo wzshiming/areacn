@@ -1,4 +1,4 @@
-# area-data-cn
+# areacn
 
 来源 http://www.stats.gov.cn/tjsj/tjbz/tjyqhdmhcxhfdm/  
 国内 5级 行政划区数据  
