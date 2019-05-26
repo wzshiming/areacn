@@ -79,7 +79,7 @@ func (r *Request) SetURL(u *url.URL) *Request {
 		qs, _ := url.ParseQuery(r.baseURL.RawQuery)
 		for k, v := range qs {
 			for _, v := range v {
-				r.AddQuery(k, v)
+				r.SetQuery(k, v)
 			}
 		}
 		r.baseURL.RawQuery = ""
@@ -89,6 +89,16 @@ func (r *Request) SetURL(u *url.URL) *Request {
 
 // SetURLByStr sets URL in the client instance.
 func (r *Request) SetURLByStr(rawurl string) *Request {
+	r.SetURL(r.GetURL(rawurl))
+	return r
+}
+
+// GetURL gets URL.
+func (r *Request) GetURL(rawurl string) *url.URL {
+	if rawurl == "" {
+		u, _ := r.processURL()
+		return u
+	}
 	var nu *url.URL
 	var err error
 	if r.baseURL == nil {
@@ -99,8 +109,7 @@ func (r *Request) SetURLByStr(rawurl string) *Request {
 	if err != nil {
 		r.client.printError(err)
 	}
-	r.SetURL(nu)
-	return r
+	return nu
 }
 
 // SetContext sets context.Context for current Request.
@@ -334,29 +343,45 @@ func (r *Request) do() (*Response, error) {
 	return r.client.do(r)
 }
 
-func (r *Request) process() (*http.Request, error) {
-	if r.rawRequest != nil {
-		return r.rawRequest, nil
+func (r *Request) processURL() (*url.URL, error) {
+	u := r.baseURL
+	if u == nil {
+		u = &url.URL{}
 	}
-
+	q := []string{}
 	// fill path
 	if len(r.pathParam) != 0 {
-		path, err := toPath(r.baseURL.Path, r.pathParam)
+		path, err := toPath(u.Path, r.pathParam)
 		if err != nil {
 			return nil, err
 		}
-		r.baseURL.Path = path
+		q = append(q, path)
+	} else {
+		q = append(q, u.Path)
 	}
 
 	// fill query
 	if len(r.queryParam) != 0 {
-		rq, err := toQuery(r.baseURL.RawQuery, r.queryParam)
+		rq, err := toQuery(u.RawQuery, r.queryParam)
 		if err != nil {
 			return nil, err
 		}
-		r.baseURL.RawQuery = rq
+		q = append(q, rq)
+	} else if u.RawQuery != "" {
+		q = append(q, u.RawQuery)
 	}
+	return u.Parse(strings.Join(q, "?"))
+}
 
+func (r *Request) RawRequest() (*http.Request, error) {
+	if r.rawRequest != nil {
+		return r.rawRequest, nil
+	}
+	u, err := r.processURL()
+	if err != nil {
+		return nil, err
+	}
+	r.baseURL = u
 	if r.body == nil {
 		if len(r.multiFiles) != 0 { // fill multpair
 			body, contentType, err := toMulti(r.formParam, r.multiFiles)
@@ -365,7 +390,7 @@ func (r *Request) process() (*http.Request, error) {
 			}
 			r.AddHeaderIfNot(HeaderContentType, contentType)
 			r.body = body
-		} else { // fill form
+		} else if len(r.formParam) != 0 { // fill form
 			body, err := toForm(r.formParam)
 			if err != nil {
 				return nil, err
@@ -403,6 +428,9 @@ func (r *Request) process() (*http.Request, error) {
 }
 
 func (r *Request) messageBody() []byte {
+	if r.rawRequest.Body == nil {
+		return nil
+	}
 	body, _ := ioutil.ReadAll(r.rawRequest.Body)
 	r.rawRequest.Body.Close()
 	r.rawRequest.Body = ioutil.NopCloser(bytes.NewReader(body))
@@ -424,8 +452,24 @@ func (r *Request) MessageHead() string {
 	return r.message(false)
 }
 
+// Unique returns identifies the uniqueness of the request
+func (r *Request) Unique() ([]byte, error) {
+	req, err := r.Clone().RawRequest()
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := httputil.DumpRequest(req, false)
+	if err != nil {
+		return nil, err
+	}
+
+	b = append(b, r.messageBody()...)
+	return b, nil
+}
+
 func (r *Request) message(body bool) string {
-	req, err := r.Clone().process()
+	req, err := r.Clone().RawRequest()
 	if err != nil {
 		return err.Error()
 	}

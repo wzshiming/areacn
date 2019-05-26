@@ -4,12 +4,17 @@ import (
 	"bytes"
 	"encoding/base64"
 	"io"
+	"mime"
 	"mime/multipart"
 	"net/http"
 	"net/url"
 	"regexp"
 	"sort"
 	"strings"
+
+	"golang.org/x/net/html/charset"
+	"golang.org/x/text/encoding"
+	"golang.org/x/text/transform"
 )
 
 // Common HTTP methods.
@@ -156,9 +161,16 @@ func toHeader(header http.Header, p paramPairs) (http.Header, error) {
 }
 
 func toQuery(rawQuery string, p paramPairs) (string, error) {
-	param, _ := url.ParseQuery(rawQuery)
+	param := url.Values{}
 	for _, v := range p {
 		param[v.Param] = append(param[v.Param], v.Value)
+	}
+	param0, _ := url.ParseQuery(rawQuery)
+	for k, v := range param0 {
+		_, ok := param[k]
+		if !ok {
+			param[k] = v
+		}
 	}
 	return param.Encode(), nil
 }
@@ -280,4 +292,16 @@ func URL(raw interface{}) *url.URL {
 		return r
 	}
 	return nil
+}
+
+// TryCharset try charset
+func TryCharset(r io.Reader, contentType string) io.Reader {
+	if _, params, err := mime.ParseMediaType(contentType); err == nil {
+		if cs, ok := params["charset"]; ok {
+			if e, _ := charset.Lookup(cs); e != nil && e != encoding.Nop {
+				r = transform.NewReader(r, e.NewDecoder())
+			}
+		}
+	}
+	return r
 }
