@@ -5,6 +5,8 @@ package main
 
 import (
 	json "encoding/json"
+	http "net/http"
+
 	mux "github.com/gorilla/mux"
 	githubComWzshimingAreacn "github.com/wzshiming/areacn"
 	githubComWzshimingAreacnServiceAreacn "github.com/wzshiming/areacn/service/areacn"
@@ -12,7 +14,6 @@ import (
 	redoc "github.com/wzshiming/openapi/ui/redoc"
 	swaggereditor "github.com/wzshiming/openapi/ui/swaggereditor"
 	swaggerui "github.com/wzshiming/openapi/ui/swaggerui"
-	http "net/http"
 )
 
 // Router is all routing for package
@@ -34,9 +35,10 @@ func RouteAreacnService(router *mux.Router, _areacnService *githubComWzshimingAr
 	if router == nil {
 		router = mux.NewRouter()
 	}
-	subrouter := router.PathPrefix("/areacn").Subrouter()
+
+	_routeAreacn := router.PathPrefix("/areacn").Subrouter()
 	if len(fs) != 0 {
-		subrouter.Use(fs...)
+		_routeAreacn.Use(fs...)
 	}
 
 	// Registered routing GET /areacn/{area_id}
@@ -44,7 +46,7 @@ func RouteAreacnService(router *mux.Router, _areacnService *githubComWzshimingAr
 	__operationGetAreacnAreaID = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_operationGetAreacnAreaID(_areacnService, w, r)
 	})
-	subrouter.Methods("GET").Path("/{area_id}").Handler(__operationGetAreacnAreaID)
+	_routeAreacn.Methods("GET").Path("/{area_id}").Handler(__operationGetAreacnAreaID)
 
 	return router
 }
@@ -52,34 +54,39 @@ func RouteAreacnService(router *mux.Router, _areacnService *githubComWzshimingAr
 // _requestPathAreaID Parsing the path for of area_id
 func _requestPathAreaID(w http.ResponseWriter, r *http.Request) (_areaID string, err error) {
 
-	var _raw_areaID = mux.Vars(r)["area_id"]
-	_areaID = string(_raw_areaID)
+	var _rawAreaID = mux.Vars(r)["area_id"]
+	_areaID = string(_rawAreaID)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+
+		return
+	}
 
 	return
 }
 
 // _operationGetAreacnAreaID Is the route of Get
 func _operationGetAreacnAreaID(s *githubComWzshimingAreacnServiceAreacn.AreacnService, w http.ResponseWriter, r *http.Request) {
-
-	var err error
 	var _areaID string
 	var _areas []*githubComWzshimingAreacn.Area
+	var _err error
 
 	// Parsing area_id.
-	_areaID, err = _requestPathAreaID(w, r)
-	if err != nil {
+	_areaID, _err = _requestPathAreaID(w, r)
+	if _err != nil {
 		return
 	}
 
 	// Call github.com/wzshiming/areacn/service/areacn AreacnService.Get.
-	_areas, err = s.Get(_areaID)
+	_areas, _err = s.Get(_areaID)
 
 	// Response code 200 OK for areas.
 	if _areas != nil {
 		var __areas []byte
-		__areas, err = json.Marshal(_areas)
-		if err != nil {
-			http.Error(w, err.Error(), 500)
+		__areas, _err = json.Marshal(_areas)
+		if _err != nil {
+			http.Error(w, _err.Error(), 500)
+
 			return
 		}
 
@@ -90,15 +97,16 @@ func _operationGetAreacnAreaID(s *githubComWzshimingAreacnServiceAreacn.AreacnSe
 	}
 
 	// Response code 400 Bad Request for err.
-	if err != nil {
-		http.Error(w, err.Error(), 400)
+	if _err != nil {
+		http.Error(w, _err.Error(), 400)
 		return
 	}
 
 	var __areas []byte
-	__areas, err = json.Marshal(_areas)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
+	__areas, _err = json.Marshal(_areas)
+	if _err != nil {
+		http.Error(w, _err.Error(), 500)
+
 		return
 	}
 
@@ -143,10 +151,12 @@ paths:
     get:
       tags:
       - AreacnService
-      summary: 'Get #route:"GET /{area_id}"# 获取行政区划分信息 总共5级 获取第一级省份传0'
-      description: 'Get #route:"GET /{area_id}"# 获取行政区划分信息 总共5级 获取第一级省份传0'
+      summary: Get  获取行政区划分信息 总共5级 获取第一级省份传0
+      description: |-
+        Get  获取行政区划分信息 总共5级 获取第一级省份传0
+        #route:"GET /{area_id}"#
       parameters:
-      - $ref: '#/components/parameters/area_id'
+      - $ref: '#/components/parameters/area_id_path'
       responses:
         "200":
           description: Response code is 200
@@ -166,6 +176,10 @@ paths:
 components:
   schemas:
     Area:
+      required:
+      - area_id
+      - name
+      - level
       type: object
       properties:
         area_id:
@@ -176,7 +190,7 @@ components:
         name:
           type: string
   responses:
-    areas:
+    areas_body:
       description: Response code is 200
       content:
         application/json:
@@ -184,7 +198,7 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/Area'
-    err:
+    err_body:
       description: Response code is 400
       content:
         text/plain:
@@ -192,7 +206,7 @@ components:
             type: string
             format: error
   parameters:
-    area_id:
+    area_id_path:
       name: area_id
       in: path
       description: '#name:"area_id"#'
@@ -201,9 +215,9 @@ components:
         type: string
 tags:
 - name: AreacnService
-  description: 'AreacnService #path:"/areacn/"#'
+  description: "AreacnService \n#path:\"/areacn/\"#"
 `)
-var OpenAPI4JSON = []byte(`{"openapi":"3.0.1","info":{"title":"OpenAPI Demo","description":"Automatically generated","contact":{"name":"wzshiming","url":"https://github.com/wzshiming/gen"},"version":"0.0.1"},"servers":[{"url":"/"},{"url":"{scheme}{host}{port}{path}","variables":{"host":{"enum":["localhost"],"default":"localhost"},"path":{"enum":["/"],"default":"/"},"port":{"enum":[""],"default":""},"scheme":{"enum":["http://","https://"],"default":"http://"}}}],"paths":{"/areacn/{area_id}":{"get":{"tags":["AreacnService"],"summary":"Get #route:\"GET /{area_id}\"# 获取行政区划分信息 总共5级 获取第一级省份传0","description":"Get #route:\"GET /{area_id}\"# 获取行政区划分信息 总共5级 获取第一级省份传0","parameters":[{"$ref":"#/components/parameters/area_id"}],"responses":{"200":{"description":"Response code is 200","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Area"}}}}},"400":{"description":"Response code is 400","content":{"text/plain":{"schema":{"type":"string","format":"error"}}}}}}}},"components":{"schemas":{"Area":{"type":"object","properties":{"area_id":{"type":"string"},"level":{"type":"integer","format":"int64"},"name":{"type":"string"}}}},"responses":{"areas":{"description":"Response code is 200","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Area"}}}}},"err":{"description":"Response code is 400","content":{"text/plain":{"schema":{"type":"string","format":"error"}}}}},"parameters":{"area_id":{"name":"area_id","in":"path","description":"#name:\"area_id\"#","required":true,"schema":{"type":"string"}}}},"tags":[{"name":"AreacnService","description":"AreacnService #path:\"/areacn/\"#"}]}`)
+var OpenAPI4JSON = []byte(`{"openapi":"3.0.1","info":{"title":"OpenAPI Demo","description":"Automatically generated","contact":{"name":"wzshiming","url":"https://github.com/wzshiming/gen"},"version":"0.0.1"},"servers":[{"url":"/"},{"url":"{scheme}{host}{port}{path}","variables":{"host":{"enum":["localhost"],"default":"localhost"},"path":{"enum":["/"],"default":"/"},"port":{"enum":[""],"default":""},"scheme":{"enum":["http://","https://"],"default":"http://"}}}],"paths":{"/areacn/{area_id}":{"get":{"tags":["AreacnService"],"summary":"Get  获取行政区划分信息 总共5级 获取第一级省份传0","description":"Get  获取行政区划分信息 总共5级 获取第一级省份传0\n#route:\"GET /{area_id}\"#","parameters":[{"$ref":"#/components/parameters/area_id_path"}],"responses":{"200":{"description":"Response code is 200","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Area"}}}}},"400":{"description":"Response code is 400","content":{"text/plain":{"schema":{"type":"string","format":"error"}}}}}}}},"components":{"schemas":{"Area":{"required":["area_id","name","level"],"type":"object","properties":{"area_id":{"type":"string"},"level":{"type":"integer","format":"int64"},"name":{"type":"string"}}}},"responses":{"areas_body":{"description":"Response code is 200","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Area"}}}}},"err_body":{"description":"Response code is 400","content":{"text/plain":{"schema":{"type":"string","format":"error"}}}}},"parameters":{"area_id_path":{"name":"area_id","in":"path","description":"#name:\"area_id\"#","required":true,"schema":{"type":"string"}}}},"tags":[{"name":"AreacnService","description":"AreacnService \n#path:\"/areacn/\"#"}]}`)
 
 // RouteOpenAPI
 func RouteOpenAPI(router *mux.Router) *mux.Router {
