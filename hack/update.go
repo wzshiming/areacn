@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/wzshiming/goquery"
+	"github.com/PuerkitoBio/goquery"
 	"github.com/wzshiming/requests"
 	ffmt "gopkg.in/ffmt.v1"
 )
